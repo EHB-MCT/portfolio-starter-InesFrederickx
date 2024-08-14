@@ -2,11 +2,11 @@ version: "3.2"
 
 services:
   api:
-    build: ./images/api
+    build: ./server/images/api
     ports:
       - 80:3000
     volumes:
-      - ./images/api/src:/usr/app/src
+      - ./server/images/api/src:/usr/app/src
     environment:
       PG_CONNECTION_STRING: "postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@store:5432/${POSTGRES_DB}"
 
