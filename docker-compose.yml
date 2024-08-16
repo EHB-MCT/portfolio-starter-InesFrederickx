@@ -20,4 +20,4 @@ services:
       POSTGRES_DB:
       POSTGRES_HOST_AUTH_METHOD:
     volumes:
-      - ./_backup:/var/lib/postgresql/data
+      - ./server/_backup:/var/lib/postgresql/data
