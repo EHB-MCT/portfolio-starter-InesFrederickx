@@ -46,7 +46,7 @@ If you encounter any issues with the project, please open a GitHub issue with a 
 
 ## Code of Conduct
 
-Please review and adhere to our [Code of Conduct](CODE_OF_CONDUCT) to ensure a respectful and inclusive environment for all contributors.
+Please review and adhere to our [Code of Conduct](CODE_OF_CONDUCT.md) to ensure a respectful and inclusive environment for all contributors.
 
 ## Licensing
 
