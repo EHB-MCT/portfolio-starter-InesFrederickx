@@ -9,9 +9,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 ### Added
 
 - Initial setup of the Express application.
-- Added Docker support including `Dockerfile`, `docker-compose.yml`, and `.dockerignore` files.
+- Docker support including `Dockerfile`, `docker-compose.yml`, and `.dockerignore` files.
 - Configured the Docker setup to include a `PostgreSQL` service and environment variables for database configuration.
-
-### Changed
-
-- Updated project folder structure for better organization and maintainability.
+- Open-source documentation: `LICENSE`, `CONTRIBUTION_GUIDELINES.md`, `CODE_OF_CONDUCT.md`, `README.md`, `.env.template` and this `CHANGELOG.md`.
