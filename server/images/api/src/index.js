@@ -1,9 +1,4 @@
-const express = require("express");
-const app = express();
-
-app.get("/", (request, response) => {
-  response.send({ message: "Hello world!" });
-});
+const app = require("./app");
 
 app.listen(3000, (err) => {
   if (!err) {

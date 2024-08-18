@@ -2,10 +2,14 @@ FROM node:latest
 
 WORKDIR /usr/app
 
-COPY package*.json .
+COPY package*.json ./
 
 RUN npm install --quiet
 
-COPY ./ ./
+RUN npm rebuild bcrypt --build-from-source
 
-CMD ["npm", "run", "start"]
+RUN apt-get update && apt-get install -y postgresql-client
+
+COPY . .
+
+CMD ["npm", "run", "go"]
