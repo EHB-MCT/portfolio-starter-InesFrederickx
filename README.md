@@ -4,25 +4,23 @@ An easy-to-use closed forum that makes it simple for students and teachers of Er
 
 ## Table of Contents
 
-1. [Purpose](#purpose)
-2. [Quick Start](#quick-start)
-3. [Database Schema](#database-schema)
-
-- [Users Table](#users-table)
-- [Threads Table](#threads-table)
-- [Replies Table](#replies-table)
-
-4. [API Endpoints](#api-endpoints)
-
-- [User Endpoints](#user-endpoints)
-- [Thread Endpoints](#thread-endpoints)
-- [Reply Endpoints](#reply-endpoints)
-
-5. [Status](#status)
-6. [Changelog](#changelog)
-7. [Contributing](#contributing)
-8. [License](#license)
-9. [Questions and Support](#questions-and-support)
+- [Portfolio: Student Forum](#portfolio-student-forum)
+  - [Table of Contents](#table-of-contents)
+  - [Purpose](#purpose)
+  - [Quick Start](#quick-start)
+  - [Database Schema](#database-schema)
+    - [Users Table](#users-table)
+    - [Threads Table](#threads-table)
+    - [Replies Table](#replies-table)
+  - [API Endpoints](#api-endpoints)
+    - [User Endpoints](#user-endpoints)
+    - [Thread Endpoints](#thread-endpoints)
+    - [Reply Endpoints](#reply-endpoints)
+  - [Status](#status)
+  - [Changelog](#changelog)
+  - [Contributing](#contributing)
+  - [License](#license)
+  - [Questions and Support](#questions-and-support)
 
 ## Purpose
 
