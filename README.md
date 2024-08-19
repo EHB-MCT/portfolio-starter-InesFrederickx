@@ -8,6 +8,7 @@ An easy-to-use closed forum that makes it simple for students and teachers of Er
   - [Table of Contents](#table-of-contents)
   - [Purpose](#purpose)
   - [Quick Start](#quick-start)
+  - [Front-End](#front-end)
   - [Testing](#testing)
   - [Database Schema](#database-schema)
     - [Users Table](#users-table)
@@ -48,6 +49,20 @@ This project uses Docker for containerization and `docker-compose` for orchestra
   ```
   docker-compose -f docker-compose.test.yml up --build
   ```
+
+3. Run the following command in the `client` folder to start the front-end:
+
+```
+npm run start
+```
+
+## Front-End
+
+After running `npm run start` in the client folder, you will need to wait a while for the website to start up.
+
+Then you can login. If you don't know the restrictions, go take a look at the unit tests. The main thing is that only users with an email that ends in `@student.ehb.be` or `@ehb.be` can register and log in. You need to have a well made password and a username that consists of letters. I have not yet implemented proper error handling in the front-end part of this project.
+
+If you want to log in with a new account, you need to restart the server. I have yet to implement the delete route for the users in the front-end.
 
 ## Testing
 
