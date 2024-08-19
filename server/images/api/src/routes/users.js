@@ -67,15 +67,33 @@ router.get("/", async (req, res) => {
  * @returns {Error} 500 - Internal Server Error.
  */
 router.get("/:user_id", async (req, res) => {
+  const user_id = parseInt(req.params.user_id, 10);
+
+  if (isNaN(user_id) || user_id < 0 || user_id > 2147483647) {
+    return res.status(401).json({
+      error: "Invalid user_id",
+      message: "The user_id must be a positive integer.",
+    });
+  }
+
   try {
+    // Select specific fields, excluding the password
     const user = await databaseConnection("users")
-      .where({ user_id: req.params.user_id })
+      .select(
+        "user_id",
+        "username",
+        "email",
+        "role",
+        "created_at",
+        "updated_at"
+      )
+      .where({ user_id })
       .first();
 
     if (!user) {
       return res.status(404).json({
         error: "User not found",
-        message: `No user exists with the user_id: ${req.params.user_id}`,
+        message: `No user exists with the user_id: ${user_id}`,
       });
     }
 
@@ -113,17 +131,15 @@ router.get("/:user_id", async (req, res) => {
 router.post("/register", async (req, res) => {
   const { username, email, password } = req.body;
 
-  if (
-    checkUserUsername(username) &&
-    checkUserEmail(email) &&
-    checkUserPassword(password)
-  ) {
+  // Check if username and email are valid
+  if (checkUserUsername(username) && checkUserEmail(email)) {
     try {
       const existingUser = await databaseConnection("users")
         .where({ email })
         .first();
 
       if (existingUser) {
+        console.log(`Email already exists: ${email}`);
         return res.status(409).json({ error: "Email already exists" });
       }
 
@@ -133,7 +149,19 @@ router.post("/register", async (req, res) => {
       } else if (email.endsWith("@ehb.be")) {
         role = "teacher";
       } else {
+        console.log(`Invalid email domain: ${email}`);
         return res.status(400).json({ error: "Invalid email domain" });
+      }
+
+      if (!checkUserPassword(password)) {
+        console.log(
+          `Password does not meet complexity requirements: ${password}`
+        );
+        return res.status(409).json({
+          error: "Password does not meet complexity requirements",
+          message:
+            "Password must be at least 8 characters long and include at least one number, one uppercase letter, and one special character.",
+        });
       }
 
       const hashedPassword = await bcrypt.hash(password, 10);
@@ -154,6 +182,13 @@ router.post("/register", async (req, res) => {
       console.error("Error creating user:", error);
       res.status(500).json({ error: "Failed to create user" });
     }
+  } else {
+    // If username or email validation fails
+    console.log(`Validation failed for username: ${username}, email: ${email}`);
+    return res.status(400).json({
+      error: "Validation failed",
+      message: "Invalid username or email format",
+    });
   }
 });
 

@@ -6,9 +6,7 @@
     "start": "nodemon src/index.js",
     "test-watch": "jest --watchAll --detectOpenHandles",
     "test": "jest --detectOpenHandles",
-    "go": "npx knex migrate:latest --cwd ./src/db && nodemon src/index.js",
-    "compose:build": "docker-compose down && docker-compose up --build && nodemon src/index.js",
-    "compose:migrate": "npm run compose:build && docker exec -it -w /usr/app/src/db portfolio-starter-inesfrederickx-api-1 npx knex migrate:latest --env development"
+    "dev": "npx knex migrate:latest --cwd ./src/db && npx knex seed:run --cwd ./src/db && npm run test-watch"
   },
   "author": "",
   "license": "ISC",
@@ -24,6 +22,8 @@
     "uuid": "^10.0.0"
   },
   "devDependencies": {
-    "jest": "^29.7.0"
+    "assert": "^2.1.0",
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
   }
 }

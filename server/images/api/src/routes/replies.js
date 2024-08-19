@@ -65,16 +65,23 @@ router.get("/", async (req, res) => {
  * @returns {Error} 404 - Reply not found.
  * @returns {Error} 500 - Failed to retrieve reply.
  */
-router.get("/:reply_id", async (req, res) => {
+router.get("/:reply_id?", async (req, res) => {
   try {
     const { reply_id } = req.params;
 
     if (!reply_id) {
-      return res.status(400).json({ error: "Reply ID is required." });
+      // Fetch all replies if no reply_id is provided
+      const replies = await databaseConnection("replies").select("*");
+      return res.json(replies);
+    }
+
+    const replyIdInt = parseInt(reply_id, 10);
+    if (isNaN(replyIdInt) || replyIdInt <= 0 || replyIdInt > 2147483647) {
+      return res.status(401).json({ error: "Invalid Reply ID." });
     }
 
     const reply = await databaseConnection("replies")
-      .where({ reply_id })
+      .where({ reply_id: replyIdInt })
       .first();
 
     if (!reply) {
@@ -306,6 +313,8 @@ router.post("/thread/:thread_id", async (req, res) => {
         .status(500)
         .json({ error: "Failed to create reply due to server error." });
     }
+  } else {
+    res.status(400).json({ error: "Invalid content." });
   }
 });
 

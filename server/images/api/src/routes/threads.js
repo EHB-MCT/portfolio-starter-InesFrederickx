@@ -67,18 +67,45 @@ router.get("/", async (req, res) => {
  * @returns {Error} 500 - Failed to retrieve thread.
  */
 router.get("/:thread_id", async (req, res) => {
+  const thread_id = parseInt(req.params.thread_id, 10);
+
+  if (isNaN(thread_id) || thread_id <= 0 || thread_id > 2147483647) {
+    return res.status(401).json({
+      error: "Invalid thread_id",
+      message: "The thread_id must be a positive integer.",
+    });
+  }
+
   try {
+    // Select specific fields
     const thread = await databaseConnection("threads")
-      .where({ thread_id: req.params.thread_id })
+      .select(
+        "thread_id",
+        "user_id",
+        "title",
+        "content",
+        "posted_anonymously",
+        "created_at",
+        "updated_at"
+      )
+      .where({ thread_id })
       .first();
 
     if (!thread) {
-      return res.status(404).json({ error: "Thread not found" });
+      return res.status(404).json({
+        error: "Thread not found",
+        message: `No thread exists with the thread_id: ${thread_id}`,
+      });
     }
 
     res.json(thread);
   } catch (error) {
-    res.status(500).json({ error: "Failed to retrieve thread" });
+    console.error("Error retrieving thread:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      message:
+        "An unexpected error occurred while retrieving thread information.",
+    });
   }
 });
 
@@ -145,37 +172,35 @@ router.get("/user/:user_id", async (req, res) => {
 router.post("/", async (req, res) => {
   const { user_id, title, content } = req.body;
 
-  if (checkThreadTitle(title) && checkThreadContent(content)) {
-    if (!user_id) {
-      return res
-        .status(400)
-        .json({ error: "You need to be logged in to post a thread" });
+  if (!user_id) {
+    return res
+      .status(400)
+      .json({ error: "You need to be logged in to post a thread" });
+  }
+
+  if (!checkThreadTitle(title) || !checkThreadContent(content)) {
+    return res.status(400).json({
+      error: "You need a title and content to create a new thread",
+    });
+  }
+
+  try {
+    const userExists = await databaseConnection("users")
+      .where({ user_id })
+      .first();
+
+    if (!userExists) {
+      return res.status(404).json({ error: "User does not exist" });
     }
 
-    if (!title || !content) {
-      return res.status(400).json({
-        error: "You need a title and content to create a new thread",
-      });
-    }
+    const [newThread] = await databaseConnection("threads")
+      .insert({ user_id, title, content })
+      .returning("*");
 
-    try {
-      const userExists = await databaseConnection("users")
-        .where({ user_id })
-        .first();
-
-      if (!userExists) {
-        return res.status(404).json({ error: "User does not exist" });
-      }
-
-      const [newThread] = await databaseConnection("threads")
-        .insert({ user_id, title, content })
-        .returning("*");
-
-      res.status(201).json(newThread);
-    } catch (error) {
-      console.error("Error creating thread:", error);
-      res.status(500).json({ error: "Failed to create thread" });
-    }
+    res.status(201).json(newThread);
+  } catch (error) {
+    console.error("Error creating thread:", error);
+    res.status(500).json({ error: "Failed to create thread" });
   }
 });
 
@@ -209,50 +234,47 @@ router.put("/:thread_id", async (req, res) => {
   const invalidFields = Object.keys(updates).filter(
     (key) => !validFields.includes(key)
   );
+  if (invalidFields.length > 0) {
+    return res.status(400).json({
+      error: "Invalid fields",
+      message: `The following fields are not valid: ${invalidFields.join(
+        ", "
+      )}`,
+    });
+  }
 
-  if (checkThreadTitle(title) && checkThreadContent(content)) {
-    if (invalidFields.length > 0) {
-      return res.status(400).json({
-        error: "Invalid fields",
-        message: `The following fields are not valid: ${invalidFields.join(
-          ", "
-        )}`,
-      });
+  if (
+    (updates.title && typeof updates.title !== "string") ||
+    (updates.content && typeof updates.content !== "string")
+  ) {
+    return res.status(400).json({
+      error: "Invalid data type",
+      message: "Title and content must be strings.",
+    });
+  }
+
+  try {
+    const existingThread = await databaseConnection("threads")
+      .where({ thread_id: req.params.thread_id })
+      .first();
+
+    if (!existingThread) {
+      return res.status(404).json({ error: "Thread not found" });
     }
 
-    if (
-      (updates.title && typeof updates.title !== "string") ||
-      (updates.content && typeof updates.content !== "string")
-    ) {
-      return res.status(400).json({
-        error: "Invalid data type",
-        message: "Title and content must be strings.",
-      });
+    const [updatedThread] = await databaseConnection("threads")
+      .where({ thread_id: req.params.thread_id })
+      .update(updates)
+      .returning("*");
+
+    if (!updatedThread) {
+      return res.status(404).json({ error: "Thread not found" });
     }
 
-    try {
-      const existingThread = await databaseConnection("threads")
-        .where({ thread_id: req.params.thread_id })
-        .first();
-
-      if (!existingThread) {
-        return res.status(404).json({ error: "Thread not found" });
-      }
-
-      const [updatedThread] = await databaseConnection("threads")
-        .where({ thread_id: req.params.thread_id })
-        .update(updates)
-        .returning("*");
-
-      if (!updatedThread) {
-        return res.status(404).json({ error: "Thread not found" });
-      }
-
-      res.json(updatedThread);
-    } catch (error) {
-      console.error("Error updating thread:", error);
-      res.status(500).json({ error: "Failed to update thread" });
-    }
+    res.json(updatedThread);
+  } catch (error) {
+    console.error("Error updating thread:", error);
+    res.status(500).json({ error: "Failed to update thread" });
   }
 });
 
