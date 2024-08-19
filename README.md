@@ -8,6 +8,7 @@ An easy-to-use closed forum that makes it simple for students and teachers of Er
   - [Table of Contents](#table-of-contents)
   - [Purpose](#purpose)
   - [Quick Start](#quick-start)
+  - [Testing](#testing)
   - [Database Schema](#database-schema)
     - [Users Table](#users-table)
     - [Threads Table](#threads-table)
@@ -34,7 +35,7 @@ This project uses Docker for containerization and `docker-compose` for orchestra
 
 2. Run the following command to build and start the project using Docker Compose:
    ```
-   docker-compose -f docker-compose.dev.yml up --build
+   docker-compose up --build
    ```
 
 - For production, use:
@@ -47,6 +48,10 @@ This project uses Docker for containerization and `docker-compose` for orchestra
   ```
   docker-compose -f docker-compose.test.yml up --build
   ```
+
+## Testing
+
+For testing, you will need to change the `user` and `password` field in the knexfile.js to your own variables, instead of those from your env file. DO NOT COMMIT YOUR CREDENTIALS!
 
 ## Database Schema
 
