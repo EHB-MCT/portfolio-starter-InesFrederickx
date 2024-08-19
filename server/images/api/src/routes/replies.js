@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const databaseConnection = require("../db/databaseConnection");
+const { checkReplyContent } = require("../helpers/replyEndpointHelpers");
 
 /**
  * Reply Parameters
@@ -64,16 +65,23 @@ router.get("/", async (req, res) => {
  * @returns {Error} 404 - Reply not found.
  * @returns {Error} 500 - Failed to retrieve reply.
  */
-router.get("/:reply_id", async (req, res) => {
+router.get("/:reply_id?", async (req, res) => {
   try {
     const { reply_id } = req.params;
 
     if (!reply_id) {
-      return res.status(400).json({ error: "Reply ID is required." });
+      // Fetch all replies if no reply_id is provided
+      const replies = await databaseConnection("replies").select("*");
+      return res.json(replies);
+    }
+
+    const replyIdInt = parseInt(reply_id, 10);
+    if (isNaN(replyIdInt) || replyIdInt <= 0 || replyIdInt > 2147483647) {
+      return res.status(401).json({ error: "Invalid Reply ID." });
     }
 
     const reply = await databaseConnection("replies")
-      .where({ reply_id })
+      .where({ reply_id: replyIdInt })
       .first();
 
     if (!reply) {
@@ -270,39 +278,43 @@ router.post("/thread/:thread_id", async (req, res) => {
   const { thread_id } = req.params;
   const { user_id, content } = req.body;
 
-  if (!user_id || !content) {
-    return res.status(400).json({
-      error: "Missing required fields: user_id and content are required.",
-    });
-  }
-
-  try {
-    const threadExists = await databaseConnection("threads")
-      .where({ thread_id })
-      .first();
-
-    if (!threadExists) {
-      return res
-        .status(404)
-        .json({ error: `Thread with ID ${thread_id} not found.` });
+  if (checkReplyContent(content)) {
+    if (!user_id || !content) {
+      return res.status(400).json({
+        error: "Missing required fields: user_id and content are required.",
+      });
     }
 
-    const [newReply] = await databaseConnection("replies")
-      .insert({ thread_id, user_id, content })
-      .returning("*");
+    try {
+      const threadExists = await databaseConnection("threads")
+        .where({ thread_id })
+        .first();
 
-    if (!newReply) {
-      return res
+      if (!threadExists) {
+        return res
+          .status(404)
+          .json({ error: `Thread with ID ${thread_id} not found.` });
+      }
+
+      const [newReply] = await databaseConnection("replies")
+        .insert({ thread_id, user_id, content })
+        .returning("*");
+
+      if (!newReply) {
+        return res
+          .status(500)
+          .json({ error: "Failed to create reply. Please try again." });
+      }
+
+      res.status(201).json(newReply);
+    } catch (error) {
+      console.error("Error creating reply:", error);
+      res
         .status(500)
-        .json({ error: "Failed to create reply. Please try again." });
+        .json({ error: "Failed to create reply due to server error." });
     }
-
-    res.status(201).json(newReply);
-  } catch (error) {
-    console.error("Error creating reply:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to create reply due to server error." });
+  } else {
+    res.status(400).json({ error: "Invalid content." });
   }
 });
 
@@ -333,52 +345,55 @@ router.put("/:reply_id", async (req, res) => {
   const invalidFields = updateFields.filter(
     (field) => !validFields.includes(field)
   );
-  if (invalidFields.length > 0) {
-    return res
-      .status(400)
-      .json({ error: `Invalid fields: ${invalidFields.join(", ")}` });
-  }
 
-  if (updateFields.length === 0) {
-    return res.status(400).json({
-      error:
-        "No fields provided for update. At least one valid field must be included.",
-    });
-  }
-
-  if (
-    req.body.content &&
-    (typeof req.body.content !== "string" || req.body.content.trim() === "")
-  ) {
-    return res
-      .status(400)
-      .json({ error: "Content must be a non-empty string." });
-  }
-
-  if (req.body.correct && typeof req.body.correct !== "boolean") {
-    return res
-      .status(400)
-      .json({ error: "The 'correct' field must be a boolean value." });
-  }
-
-  try {
-    const [updatedReply] = await databaseConnection("replies")
-      .where({ reply_id: req.params.reply_id })
-      .update(req.body)
-      .returning("*");
-
-    if (!updatedReply) {
+  if (checkReplyContent(content)) {
+    if (invalidFields.length > 0) {
       return res
-        .status(404)
-        .json({ error: `Reply with ID ${req.params.reply_id} not found.` });
+        .status(400)
+        .json({ error: `Invalid fields: ${invalidFields.join(", ")}` });
     }
 
-    res.json(updatedReply);
-  } catch (error) {
-    console.error("Error updating reply:", error);
-    res
-      .status(500)
-      .json({ error: "Failed to update reply due to a server error." });
+    if (updateFields.length === 0) {
+      return res.status(400).json({
+        error:
+          "No fields provided for update. At least one valid field must be included.",
+      });
+    }
+
+    if (
+      req.body.content &&
+      (typeof req.body.content !== "string" || req.body.content.trim() === "")
+    ) {
+      return res
+        .status(400)
+        .json({ error: "Content must be a non-empty string." });
+    }
+
+    if (req.body.correct && typeof req.body.correct !== "boolean") {
+      return res
+        .status(400)
+        .json({ error: "The 'correct' field must be a boolean value." });
+    }
+
+    try {
+      const [updatedReply] = await databaseConnection("replies")
+        .where({ reply_id: req.params.reply_id })
+        .update(req.body)
+        .returning("*");
+
+      if (!updatedReply) {
+        return res
+          .status(404)
+          .json({ error: `Reply with ID ${req.params.reply_id} not found.` });
+      }
+
+      res.json(updatedReply);
+    } catch (error) {
+      console.error("Error updating reply:", error);
+      res
+        .status(500)
+        .json({ error: "Failed to update reply due to a server error." });
+    }
   }
 });
 

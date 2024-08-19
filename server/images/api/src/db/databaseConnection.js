@@ -1,7 +1,7 @@
 const knex = require("knex");
 const knexfile = require("./knexfile");
 
-const environment = process.env.NODE_ENV || "development";
+const environment = "development";
 
 /**
  * Initialize and export the Knex database connection for the current environment.

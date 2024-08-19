@@ -1,6 +1,10 @@
 const express = require("express");
 const router = express.Router();
 const databaseConnection = require("../db/databaseConnection");
+const {
+  checkThreadTitle,
+  checkThreadContent,
+} = require("../helpers/threadEndpointHelpers");
 
 /**
  * Thread Parameters
@@ -63,18 +67,45 @@ router.get("/", async (req, res) => {
  * @returns {Error} 500 - Failed to retrieve thread.
  */
 router.get("/:thread_id", async (req, res) => {
+  const thread_id = parseInt(req.params.thread_id, 10);
+
+  if (isNaN(thread_id) || thread_id <= 0 || thread_id > 2147483647) {
+    return res.status(401).json({
+      error: "Invalid thread_id",
+      message: "The thread_id must be a positive integer.",
+    });
+  }
+
   try {
+    // Select specific fields
     const thread = await databaseConnection("threads")
-      .where({ thread_id: req.params.thread_id })
+      .select(
+        "thread_id",
+        "user_id",
+        "title",
+        "content",
+        "posted_anonymously",
+        "created_at",
+        "updated_at"
+      )
+      .where({ thread_id })
       .first();
 
     if (!thread) {
-      return res.status(404).json({ error: "Thread not found" });
+      return res.status(404).json({
+        error: "Thread not found",
+        message: `No thread exists with the thread_id: ${thread_id}`,
+      });
     }
 
     res.json(thread);
   } catch (error) {
-    res.status(500).json({ error: "Failed to retrieve thread" });
+    console.error("Error retrieving thread:", error);
+    res.status(500).json({
+      error: "Internal Server Error",
+      message:
+        "An unexpected error occurred while retrieving thread information.",
+    });
   }
 });
 
@@ -147,7 +178,7 @@ router.post("/", async (req, res) => {
       .json({ error: "You need to be logged in to post a thread" });
   }
 
-  if (!title || !content) {
+  if (!checkThreadTitle(title) || !checkThreadContent(content)) {
     return res.status(400).json({
       error: "You need a title and content to create a new thread",
     });

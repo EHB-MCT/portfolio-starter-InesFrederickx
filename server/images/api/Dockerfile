@@ -12,4 +12,4 @@ RUN apt-get update && apt-get install -y postgresql-client
 
 COPY . .
 
-CMD ["npm", "run", "go"]
+CMD ["npm", "run", "start"]
