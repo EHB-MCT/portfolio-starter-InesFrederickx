@@ -1,0 +1,40 @@
+# Node.js dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Dependency directories
+jspm_packages/
+
+# IDE and editor specific files
+.vscode/
+.idea/
+
+# Operating system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Environment variables
+.env
+
+# Temporary files
+*.tmp
+*.swp
+
+# Docker files
+*.dockerfile
+
+# System files
+*.pid
+*.seed
+
+# Miscellaneous
+*.sublime-workspace
+*.sublime-project
+
+_backup
